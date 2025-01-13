@@ -12,12 +12,15 @@ def read_data(filename):
               the data for a plane.
             - separation_times (list of lists): A 2D list of separation times.
     """
+    
+    print("---------- Reading data from", filename.split('/')[-1], "----------\n")
+    
     try:
         with open(filename, "r") as f:
             # Read the first line: number of planes and freeze time
             first_line = f.readline().strip().split()
             num_planes = int(first_line[0])
-            freeze_time = int(first_line[1])
+            _ = int(first_line[1])
 
             planes_data = []
             separation_times = []
@@ -48,6 +51,8 @@ def read_data(filename):
 
                 separation_times.append(separation_row)
 
+        print("Number of planes:", num_planes, "\n")
+        
         return num_planes, planes_data, separation_times
 
     except FileNotFoundError:

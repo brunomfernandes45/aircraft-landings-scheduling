@@ -259,3 +259,5 @@ def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_ru
                 )
     else:
         print("No optimal solution found.")
+        if status == pywraplp.Solver.FEASIBLE:
+            print("Best feasible solution found:", round(solver.Objective().Value(), 2))
