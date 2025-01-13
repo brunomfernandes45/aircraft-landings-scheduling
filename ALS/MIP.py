@@ -1,6 +1,5 @@
 from ortools.linear_solver import pywraplp
 
-
 def create_mip_solver(
     num_planes,
     planes_data,
