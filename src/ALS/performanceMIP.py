@@ -104,17 +104,6 @@ def summarize_metrics_MIP(solver, variables, num_planes, num_runways=None, plane
     metrics['num_constraints'] = num_constraints
     print(f"-> Number of constraints in the model: {num_constraints}")
 
-    # Workload per runway (if applicable)
-    if num_runways is not None:
-        workloads = calculate_runway_workload(variables, num_runways, num_planes)
-        workload_imbalance = calculate_workload_imbalance(workloads)
-        metrics['workloads'] = workloads
-        metrics['workload_imbalance'] = workload_imbalance
-        print(f"-> Workload per runway: {workloads}")
-        print(f"-> Workload imbalance: {workload_imbalance}")
-    else:
-        print("-> Workload per runway not calculated (number of runways not provided).")
-
     # Total penalty (if applicable)
     if planes_data is not None:
         total_penalty = calculate_total_penalty(variables, planes_data)
