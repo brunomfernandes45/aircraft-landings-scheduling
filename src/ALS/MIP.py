@@ -1,4 +1,5 @@
 from ortools.linear_solver import pywraplp
+from src.ALS.performanceMIP import summarize_metrics_MIP
 
 def create_mip_solver(
     num_planes,
@@ -231,14 +232,22 @@ def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_ru
     solver, variables = create_mip_solver(
         num_planes, planes_data, separation_times, num_runways
     )
-
+    
     print("\n---------- Solving MIP ----------\n")
 
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
         print(f"Optimal Cost: {solver.Objective().Value()}")
-
+        
+        metrics = summarize_metrics_MIP(
+            solver,
+            variables,
+            num_planes,
+            num_runways = 1,
+            planes_data = planes_data
+        )
+        
         # print the landing times of the planes that did not land on the target time
         print("\nPlanes that did not land on the target time:")
         for i in range(num_planes):

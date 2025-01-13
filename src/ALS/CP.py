@@ -1,4 +1,5 @@
 from ortools.sat.python import cp_model
+from src.ALS.performanceCP import PerformanceTracker
 
 #----------------------------
 # SINGLE_RUNWAY
@@ -132,8 +133,17 @@ def solve_single_runway_cp(num_planes, freeze_time, planes_data, separation_time
         num_planes, freeze_time, planes_data, separation_times
     )
 
+    # Create solver instance
     solver = cp_model.CpSolver()
+    
+    # Create a PerformanceTracker instance that will track solver performance
+    tracker = PerformanceTracker(solver, planes_data)
+
+    # Solve the model with performance tracking
     status = solver.Solve(model)
+
+    # Print performance metrics after solving
+    tracker.print_performance_metrics()
     
     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
         print("Status:", solver.StatusName(status))
@@ -314,9 +324,15 @@ def solve_multiple_runways_cp(num_planes, num_runways, freeze_time, planes_data,
     #     solver.parameters.search_branching = cp_model.VarBranchingPolicy.AUTOMATIC
     # else:
     #     raise ValueError(f"Unknown search strategy: {search_strategy}")
+    
+    # Create a PerformanceTracker instance that will track solver performance
+    tracker = PerformanceTracker(solver, planes_data)
 
-    # Solve the model
+    # Solve the model with performance tracking
     status = solver.Solve(model)
+
+    # Print performance metrics after solving
+    tracker.print_performance_metrics()
 
     # If a solution is found, print results
     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
