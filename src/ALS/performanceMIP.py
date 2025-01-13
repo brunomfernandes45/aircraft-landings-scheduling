@@ -37,37 +37,6 @@ def calculate_num_constraints(solver):
     """
     return solver.NumConstraints()
 
-def calculate_runway_workload(variables, num_runways, num_planes):
-    """
-    Calculates the workload (number of landings) for each runway.
-
-    Args:
-        variables: Dictionary containing model variables.
-        num_runways: Number of runways.
-        num_planes: Number of planes.
-
-    Returns:
-        list: Workload for each runway.
-    """
-    workloads = [0] * num_runways
-    for r in range(num_runways):
-        workloads[r] = sum(
-            variables["landing_runway"][(i, r)].solution_value() for i in range(num_planes)
-        )
-    return workloads
-
-def calculate_workload_imbalance(workloads):
-    """
-    Calculates the imbalance in workload across runways.
-
-    Args:
-        workloads: List of workloads for each runway.
-
-    Returns:
-        int: Difference between the maximum and minimum workload.
-    """
-    return max(workloads) - min(workloads)
-
 def calculate_total_penalty(variables, planes_data):
     """
     Calculates the total penalty of the solution based on early and late deviations.
