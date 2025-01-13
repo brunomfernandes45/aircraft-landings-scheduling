@@ -1,5 +1,5 @@
 from ortools.sat.python import cp_model
-from src.ALS.performanceCP import PerformanceTracker
+from ALS.performanceCP import PerformanceTracker
 
 #----------------------------
 # SINGLE_RUNWAY

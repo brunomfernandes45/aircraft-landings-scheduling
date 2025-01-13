@@ -1,3 +1,6 @@
+from ortools.linear_solver import pywraplp
+import psutil
+
 def calculate_execution_time(solver):
     """
     Calculates the total execution time of the solver.
@@ -96,6 +99,7 @@ def calculate_memory_usage():
     return memory_in_bytes / (1024 * 1024)  # Convert to MB
 
 
+
 def summarize_metrics_MIP(solver, variables, num_planes, num_runways=None, planes_data=None):
     """
     Calculates and prints metrics specific to MIP problems.
@@ -111,7 +115,7 @@ def summarize_metrics_MIP(solver, variables, num_planes, num_runways=None, plane
         dict: Dictionary containing all calculated metrics.
     """
     print("=" * 60)
-    print("METRICS FOR MIP PROBLEMS")
+    print("Performance Metrics for MIP")
     print("=" * 60)
 
     metrics = {}

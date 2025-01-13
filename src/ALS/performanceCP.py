@@ -25,7 +25,10 @@ class PerformanceTracker(cp_model.CpSolverSolutionCallback):
         memory_after = psutil.Process().memory_info().rss
         memory_usage = (memory_after - self.memory_before) / (1024 * 1024)  # MB
 
-        print("\nPerformance Metrics:")
+        
+        print("=" * 60)
+        print("Performance Metrics for CP")
+        print("=" * 60)
         print(f"Execution time (s): {execution_time:.4f}")
         print(f"Memory usage (MB): {memory_usage:.4f}")
         print(f"Number of solutions found: {self.num_solutions}")

@@ -1,5 +1,5 @@
 from ortools.linear_solver import pywraplp
-from src.ALS.performanceMIP import summarize_metrics_MIP
+from ALS.performanceMIP import summarize_metrics_MIP
 
 def create_mip_solver(
     num_planes,
@@ -239,7 +239,7 @@ def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_ru
 
     if status == pywraplp.Solver.OPTIMAL:
         print(f"Optimal Cost: {solver.Objective().Value()}")
-        
+        print()
         metrics = summarize_metrics_MIP(
             solver,
             variables,
