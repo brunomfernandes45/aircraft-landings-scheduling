@@ -1,6 +1,174 @@
 from ortools.sat.python import cp_model
 
-def create_or_tools_cp_model_with_permutation(num_planes, num_runways, freeze_time, planes_data, separation_times):
+#----------------------------
+# SINGLE_RUNWAY
+#----------------------------
+
+def create_cp_model_single_runways(num_planes, freeze_time, planes_data, separation_times):
+    # Create the CP-SAT model
+    model = cp_model.CpModel()
+
+    # ------------------------------------------------------------------
+    # 1) EXTRACT RELEVANT DATA INTO ARRAYS (for convenience)
+    # ------------------------------------------------------------------
+    E = [p["earliest_landing_time"] for p in planes_data]  # Earliest landing times
+    T = [p["target_landing_time"]   for p in planes_data]  # Target landing times
+    L = [p["latest_landing_time"]   for p in planes_data]  # Latest landing times
+    cost_e = [p["penalty_early"]    for p in planes_data]  # Penalty for earliness
+    cost_l = [p["penalty_late"]     for p in planes_data]  # Penalty for lateness
+
+    # ------------------------------------------------------------------
+    # 2) VARIABLE CREATION
+    # ------------------------------------------------------------------
+
+    # 'position[i]' determines the landing order of plane i
+    position = [
+        model.NewIntVar(0, num_planes - 1, f"position_{i}")
+        for i in range(num_planes)
+    ]
+
+    # 'landing_time[i]' is the time plane i actually lands
+    landing_time = [
+        model.NewIntVar(0, 10_000_000, f"landing_time_{i}")
+        for i in range(num_planes)
+    ]
+
+    # 'earliness[i]' measures how many time units plane i lands before target
+    earliness = [
+        model.NewIntVar(
+            0,
+            max(T[i] - E[i], 0),  # Max possible earliness
+            f"earliness_{i}")
+        for i in range(num_planes)]
+
+    # 'lateness[i]' measures how many time units plane i lands after target
+    lateness = [
+        model.NewIntVar(
+            0,
+            max(L[i] - T[i], 0),  # Max possible lateness
+            f"lateness_{i}")
+        for i in range(num_planes)]
+
+    # Boolean variables: iBeforeJ[i][j] = True if plane i lands before plane j (i < j).
+    # We'll store these in a 2D list for convenience.
+    iBeforeJ = []
+    for i in range(num_planes):
+        row = []
+        for j in range(num_planes):
+            if j > i:
+                # Only define it for j > i to avoid duplication
+                row.append(model.NewBoolVar(f"iBeforeJ_{i}_{j}"))
+            else:
+                # For j <= i, we can store None (or a dummy variable)
+                row.append(None)
+        iBeforeJ.append(row)
+
+    # ------------------------------------------------------------------
+    # 3) CONSTRAINTS
+    # ------------------------------------------------------------------
+
+    # (3.1) All-Different for positions to enforce a permutation
+    model.AddAllDifferent(position)
+
+    # (3.2) Earliest/latest landing time constraints
+    for i in range(num_planes):
+        model.Add(landing_time[i] >= E[i])  # no earlier than E[i]
+        model.Add(landing_time[i] <= L[i])  # no later than L[i]
+
+    # (3.3) Earliness / lateness definitions
+    for i in range(num_planes):
+        model.Add(earliness[i] >= T[i] - landing_time[i])
+        model.Add(earliness[i] >= 0)
+        model.Add(lateness[i]  >= landing_time[i] - T[i])
+        model.Add(lateness[i]  >= 0)
+
+    # (3.4) Separation constraints using the boolean iBeforeJ
+    # For each pair (i, j) with i < j, if plane i lands before j, then
+    # landing_time[j] >= landing_time[i] + separation_times[i][j].
+    # Otherwise, landing_time[i] >= landing_time[j] + separation_times[j][i].
+    for i in range(num_planes):
+        for j in range(i + 1, num_planes):
+            # iBeforeJ[i][j] <-> (position[i] < position[j])
+            model.Add(position[i] < position[j]).OnlyEnforceIf(iBeforeJ[i][j])
+            model.Add(position[i] >= position[j]).OnlyEnforceIf(iBeforeJ[i][j].Not())
+
+            # If i lands before j:
+            model.Add(
+                landing_time[j] >= landing_time[i] + separation_times[i][j]
+            ).OnlyEnforceIf(iBeforeJ[i][j])
+
+            # If j lands before i:
+            model.Add(
+                landing_time[i] >= landing_time[j] + separation_times[j][i]
+            ).OnlyEnforceIf(iBeforeJ[i][j].Not())
+
+    # ------------------------------------------------------------------
+    # 4) OBJECTIVE FUNCTION: MINIMIZE TOTAL EARLINESS + LATENESS COST
+    # ------------------------------------------------------------------
+    cost_terms = []
+    for i in range(num_planes):
+        cost_terms.append(cost_e[i] * earliness[i])
+        cost_terms.append(cost_l[i] * lateness[i])
+
+    model.Minimize(sum(cost_terms))
+
+    # ------------------------------------------------------------------
+    # 5) RETURN MODEL AND VARIABLES
+    # ------------------------------------------------------------------
+    variables = {
+        "position": position,
+        "landing_time": landing_time,
+        "earliness": earliness,
+        "lateness": lateness,
+        "iBeforeJ": iBeforeJ
+    }
+
+    return model, variables
+
+
+def solve_single_runway_cp(num_planes, freeze_time, planes_data, separation_times):
+    """Builds and solves the single-runway CP model with a permutation approach."""
+    model, vars_ = create_or_tools_cp_model_with_permutation(
+        num_planes, freeze_time, planes_data, separation_times
+    )
+
+    solver = cp_model.CpSolver()
+    status = solver.Solve(model)
+    
+    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
+        print("Status:", solver.StatusName(status))
+        print("Objective:", solver.ObjectiveValue())
+        print()
+
+        position = vars_["position"]
+        landing_time = vars_["landing_time"]
+        earliness = vars_["earliness"]
+        lateness = vars_["lateness"]
+        iBeforeJ = vars_["iBeforeJ"]
+
+        for i in range(num_planes):
+            pos_val = solver.Value(position[i])
+            t_val = solver.Value(landing_time[i])
+            e_ = solver.Value(earliness[i])
+            L_ = solver.Value(lateness[i])
+            T_ = planes_data[i]["target_landing_time"]
+            print(f"Plane {i}: position={pos_val}, landing={t_val}, E'={e_}, L'={L_}, target={T_}")
+
+        print("\nSchedule order (by position):")
+        schedule = sorted(range(num_planes), key=lambda i: solver.Value(position[i]))
+        for k in schedule:
+            print(f" -> Plane {k} (pos={solver.Value(position[k])}, land={solver.Value(landing_time[k])})")
+
+    else:
+        print("No feasible/optimal solution found. Status:", solver.StatusName(status))
+
+
+#----------------------------
+# MULTIPLE RUNWAYS
+#----------------------------
+
+
+def create_cp_model_multiple_runways(num_planes, num_runways, freeze_time, planes_data, separation_times):
     # Create the CP-SAT model
     model = cp_model.CpModel()
 
@@ -122,9 +290,9 @@ def create_or_tools_cp_model_with_permutation(num_planes, num_runways, freeze_ti
     return model, variables
 
 
-def solve_cp_model_with_permutation(num_planes, num_runways, freeze_time, planes_data, separation_times, search_strategy):
+def solve_multiple_runways_cp(num_planes, num_runways, freeze_time, planes_data, separation_times, search_strategy):
     # Create the model and variables
-    model, vars_ = create_or_tools_cp_model_with_permutation(
+    model, vars_ = create_cp_model_multiple_runways(
         num_planes,
         num_runways,
         freeze_time,
