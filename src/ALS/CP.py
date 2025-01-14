@@ -144,6 +144,11 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
     
     # Memory Usage after the Solver
     memory_after = psutil.Process().memory_info().rss 
+
+    position = vars_["position"]
+    landing_time = vars_["landing_time"]
+    earliness = vars_["earliness"]
+    lateness = vars_["lateness"]
     
     if status == cp_model.OPTIMAL:
         # -------------------------------
@@ -193,7 +198,7 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
     else:
         print("No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-        return solver, memory_before, memory_after
+    return solver, memory_before, memory_after
 
 #----------------------------
 # MULTIPLE RUNWAYS
