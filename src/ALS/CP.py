@@ -6,8 +6,9 @@ import psutil
 #----------------------------
 
 def create_cp_model_single_runways(num_planes, planes_data, separation_times):
-
-    print("---------- Creating CP model ----------\n") 
+    print("=" * 60)
+    print("\t\t    Creating CP model") 
+    print("=" * 60, "\n")
     
     # Create the CP-SAT model
     model = cp_model.CpModel()
@@ -142,7 +143,9 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
     print("Number of decision variables created:", len(model.Proto().variables))
     print("Number of constraints:", len(model.Proto().constraints))
 
-    print("\n---------- Solving CP ----------\n")
+    print("\n" + "=" * 60)
+    print("\t\t\tSolving CP")
+    print("=" * 60, "\n")
 
 
     # Memory Usage before the Solver
@@ -215,8 +218,9 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
 
 
 def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separation_times):
-    
-    print("---------- Creating CP model ----------\n")
+    print("=" * 60)
+    print("\t\t    Creating CP model")
+    print("=" * 60, "\n")
 
     # Create the CP-SAT model
     model = cp_model.CpModel()
@@ -357,7 +361,9 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
     print("Number of decision variables created:", len(model.Proto().variables))
     print("Number of constraints:", len(model.Proto().constraints))
 
-    print("\n---------- Solving CP ----------\n")
+    print("\n" + "=" * 60)
+    print("\t\t\tSolving CP")
+    print("=" * 60, "\n")
 
     # Memory Usage before the Solver
     memory_before = psutil.Process().memory_info().rss  # Memory in bytes
