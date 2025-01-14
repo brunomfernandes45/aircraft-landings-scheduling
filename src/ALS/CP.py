@@ -145,34 +145,55 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
     # Memory Usage after the Solver
     memory_after = psutil.Process().memory_info().rss 
     
-    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-        print("Status:", solver.StatusName(status))
-        print("Objective:", solver.ObjectiveValue())
-        print()
+    if status == cp_model.OPTIMAL:
+        # -------------------------------
+        # Print as if it were MIP's OPTIMAL
+        # -------------------------------
+        print(f"Optimal Cost: {solver.ObjectiveValue()}")
 
-        position = vars_["position"]
-        landing_time = vars_["landing_time"]
-        earliness = vars_["earliness"]
-        lateness = vars_["lateness"]
-        iBeforeJ = vars_["iBeforeJ"]
-
+        print("\nPlanes that did not land on the target time:")
         for i in range(num_planes):
-            pos_val = solver.Value(position[i])
-            t_val = solver.Value(landing_time[i])
             e_ = solver.Value(earliness[i])
             L_ = solver.Value(lateness[i])
-            T_ = planes_data[i]["target_landing_time"]
-            print(f"Plane {i}: position={pos_val}, landing={t_val}, E'={e_}, L'={L_}, target={T_}")
+            # If earliness or lateness > 0, plane missed its target
+            if e_ > 0 or L_ > 0:
+                # Calculate penalty
+                penalty = (
+                    e_ * planes_data[i]["penalty_early"]
+                    + L_ * planes_data[i]["penalty_late"]
+                )
+                landing_t = solver.Value(landing_time[i])
+                target_t = planes_data[i]["target_landing_time"]
+                print(
+                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                )
 
-        print("\nSchedule order (by position):")
-        schedule = sorted(range(num_planes), key=lambda i: solver.Value(position[i]))
-        for k in schedule:
-            print(f" -> Plane {k} (pos={solver.Value(position[k])}, land={solver.Value(landing_time[k])})")
+    elif status == cp_model.FEASIBLE:
+        # -------------------------------
+        # No optimal solution
+        # -------------------------------
+        print("Best feasible solution found:", round(solver.ObjectiveValue(), 2))
+
+        # You can optionally also list planes that missed their target
+        print("\nPlanes that did not land on the target time:")
+        for i in range(num_planes):
+            e_ = solver.Value(earliness[i])
+            L_ = solver.Value(lateness[i])
+            if e_ > 0 or L_ > 0:
+                penalty = (
+                    e_ * planes_data[i]["penalty_early"]
+                    + L_ * planes_data[i]["penalty_late"]
+                )
+                landing_t = solver.Value(landing_time[i])
+                target_t = planes_data[i]["target_landing_time"]
+                print(
+                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                )
 
     else:
         print("No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-    return solver, memory_before, memory_after
+        return solver, memory_before, memory_after
 
 #----------------------------
 # MULTIPLE RUNWAYS
