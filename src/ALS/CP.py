@@ -131,7 +131,7 @@ def create_cp_model_single_runways(num_planes, planes_data, separation_times):
     return model, variables
 
 
-def solve_single_runway_cp(num_planes, planes_data, separation_times):
+def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None):
     """Builds and solves the single-runway CP model with a permutation approach."""
     model, vars_ = create_cp_model_single_runways(
         num_planes, planes_data, separation_times
@@ -150,6 +150,26 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times):
 
     # Memory Usage before the Solver
     memory_before = psutil.Process().memory_info().rss  # Memory in bytes
+
+    if decision_strategies:
+        for strategy in decision_strategies:
+            # Obter as variáveis a partir do nome fornecido
+            var_names = strategy["variables"]
+            if isinstance(var_names, str):
+                var_list = vars_.get(var_names, [])
+            elif isinstance(var_names, list):
+                var_list = []
+                for var_name in var_names:
+                    var_list.extend(vars_.get(var_name, []))
+            else:
+                raise ValueError("O campo 'variables' deve ser uma string ou uma lista de strings.")
+            
+            # Aplicar a estratégia ao conjunto de variáveis
+            model.AddDecisionStrategy(
+                var_list,
+                strategy["variable_strategy"],
+                strategy["value_strategy"]
+            )
 
     # Solve the model with performance tracking
     status = solver.Solve(model)
@@ -346,7 +366,7 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     return model, variables
 
 
-def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times):
+def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times, decision_strategies=None):
     # Create the model and variables
     model, vars_ = create_cp_model_multiple_runways(
         num_planes,
@@ -367,6 +387,26 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
     # Memory Usage before the Solver
     memory_before = psutil.Process().memory_info().rss  # Memory in bytes
+
+    if decision_strategies:
+        for strategy in decision_strategies:
+            # Obter as variáveis a partir do nome fornecido
+            var_names = strategy["variables"]
+            if isinstance(var_names, str):
+                var_list = vars_.get(var_names, [])
+            elif isinstance(var_names, list):
+                var_list = []
+                for var_name in var_names:
+                    var_list.extend(vars_.get(var_name, []))
+            else:
+                raise ValueError("O campo 'variables' deve ser uma string ou uma lista de strings.")
+            
+            # Aplicar a estratégia ao conjunto de variáveis
+            model.AddDecisionStrategy(
+                var_list,
+                strategy["variable_strategy"],
+                strategy["value_strategy"]
+            )
 
     # Solve the model
     status = solver.Solve(model)
