@@ -1,6 +1,3 @@
-from ortools.linear_solver import pywraplp
-import psutil
-
 def calculate_execution_time(solver):
     """
     Calculates the total execution time of the solver.
@@ -37,25 +34,6 @@ def calculate_num_constraints(solver):
     """
     return solver.NumConstraints()
 
-def calculate_total_penalty(variables, planes_data):
-    """
-    Calculates the total penalty of the solution based on early and late deviations.
-
-    Args:
-        variables: Dictionary containing model variables.
-        planes_data: List of dictionaries with data for each plane.
-
-    Returns:
-        float: Total penalty of the solution.
-    """
-    total_penalty = 0
-    for i, plane in enumerate(planes_data):
-        total_penalty += (
-            variables["early_deviation"][i].solution_value() * plane["penalty_early"]
-            + variables["late_deviation"][i].solution_value() * plane["penalty_late"]
-        )
-    return total_penalty
-
 def calculate_memory_usage(memory_before, memory_after):
     """
     Measures the memory usage of the solver process during execution.
@@ -67,17 +45,14 @@ def calculate_memory_usage(memory_before, memory_after):
     return memory_usage
 
 
-def performance_MIP(solver, variables, num_planes, mem_before, mem_after, num_runways=None, planes_data=None):
+def performance_MIP(solver, mem_before, mem_after):
     """
     Calculates and prints metrics specific to MIP problems.
 
     Args:
         solver: Instance of the OR-Tools solver.
-        variables: Dictionary containing the model variables.
-        num_planes: Number of planes in the problem.
-        num_runways: (Optional) Number of runways.
-        planes_data: (Optional) Data of planes used to calculate penalties.
-
+        mem_before (int): Memory usage before solving the problem.
+        mem_after (int): Memory usage after solving the problem.
     Returns:
         dict: Dictionary containing all calculated metrics.
     """
@@ -98,13 +73,9 @@ def performance_MIP(solver, variables, num_planes, mem_before, mem_after, num_ru
     num_constraints = calculate_num_constraints(solver)
     print(f"-> Number of constraints in the model: {num_constraints}")
 
-    # Total penalty (if applicable)
-    total_penalty = 0
-    if planes_data is not None:
-        total_penalty = calculate_total_penalty(variables, planes_data)
-        print(f"-> Total penalty: {total_penalty:.2f}")
-    else:
-        print("-> Total penalty not calculated (plane data not provided).")
+    # Total penalty
+    total_penalty = solver.Objective().Value()
+    print(f"-> Total penalty: {total_penalty:.1f}")
     
     # Memory usage
     mem_usage = calculate_memory_usage(mem_before, mem_after)

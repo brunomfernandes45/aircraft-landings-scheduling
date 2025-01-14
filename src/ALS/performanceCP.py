@@ -1,5 +1,4 @@
 from ortools.sat.python import cp_model
-import psutil, time
 
 class PerformanceTracker(cp_model.CpSolverSolutionCallback):
     def __init__(self, solver, planes_data, mem_before, mem_after):
@@ -10,7 +9,6 @@ class PerformanceTracker(cp_model.CpSolverSolutionCallback):
         self.planes_data = planes_data
         
         # Initialize performance metrics
-        self.start_time = time.time()
         self.memory_before = mem_before 
         self.memory_after = mem_after
         

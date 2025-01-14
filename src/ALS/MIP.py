@@ -7,7 +7,9 @@ def create_mip_solver(
     separation_times,
     num_runways,
 ):
-    print("---------- Creating MIP solver ----------\n")
+    print("=" * 60)
+    print("\t\t    Creating MIP Solver")
+    print("=" * 60, "\n")
 
     # Create the LP solver
     solver = pywraplp.Solver.CreateSolver("SAT")  # Using the SAT solver
@@ -228,46 +230,71 @@ def create_mip_solver(
     return solver, variables
 
 
-def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_runways):
+def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_times):
     solver, variables = create_mip_solver(
         num_planes, planes_data, separation_times, num_runways
     )
-    
-    print("\n---------- Solving MIP ----------\n")
+    print("\n" + "=" * 60)
+    print("\t\t\tSolving MIP")
+    print("=" * 60, "\n")
 
     # Memory Usage before the Solver
     memory_before = psutil.Process().memory_info().rss  # Memory in bytes
-    
+
     # Solve the model with performance tracking
     status = solver.Solve()    
-    
+
     # Memory Usage after the Solver
-    memory_after = psutil.Process().memory_info().rss 
-    
+    memory_after = psutil.Process().memory_info().rss
+
+    landing_time = variables["landing_times"]
+    earliness = variables["early_deviation"]
+    lateness = variables["late_deviation"]
+
     if status == pywraplp.Solver.OPTIMAL:
         print(f"Optimal Cost: {solver.Objective().Value()}")
-        
-        # print the landing times of the planes that did not land on the target time
+
         print("\nPlanes that did not land on the target time:")
         for i in range(num_planes):
-            if (
-                variables["early_deviation"][i].solution_value() > 0
-                or variables["late_deviation"][i].solution_value() > 0
-            ):
-                # calculate associated penalties
+            e_ = variables["early_deviation"][i].solution_value()
+            L_ = variables["late_deviation"][i].solution_value()
+            # If earliness or lateness > 0, plane missed its target
+            if e_ > 0 or L_ > 0:
+                # Calculate penalty
                 penalty = (
-                    variables["early_deviation"][i].solution_value()
-                    * planes_data[i]["penalty_early"]
-                    + variables["late_deviation"][i].solution_value()
-                    * planes_data[i]["penalty_late"]
+                    e_ * planes_data[i]["penalty_early"]
+                    + L_ * planes_data[i]["penalty_late"]
                 )
-
+                landing_t = variables["landing_times"][i]
+                target_t = planes_data[i]["target_landing_time"]
                 print(
-                    f"Plane {i}: {variables['landing_times'][i].solution_value()} | Target Time: {planes_data[i]['target_landing_time']} | Penalty: {penalty}"
+                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
                 )
     else:
+        # -------------------------------
+        # No optimal solution
+        # -------------------------------
         print("No optimal solution found.")
+
+        # If still FEASIBLE, show best known cost
         if status == pywraplp.Solver.FEASIBLE:
-            print("Best feasible solution found:", round(solver.Objective().Value(), 2))
-            
-    return solver, variables, num_planes, memory_before, memory_after, num_runways
+            print("Best feasible solution found:", round(solver.ObjectiveValue(), 2))
+
+            # You can optionally also list planes that missed their target
+            print("\nPlanes that did not land on the target time:")
+            for i in range(num_planes):
+                e_ = solver.Value(earliness[i])
+                L_ = solver.Value(lateness[i])
+                if e_ > 0 or L_ > 0:
+                    penalty = (
+                        e_ * planes_data[i]["penalty_early"]
+                        + L_ * planes_data[i]["penalty_late"]
+                    )
+                    landing_t = solver.Value(landing_time[i])
+                    target_t = planes_data[i]["target_landing_time"]
+                    print(
+                        f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                    )
+
+    # Return the solver, variables, number of planes, memory usage info and the number of runways
+    return solver, variables, num_planes, memory_before, memory_after
