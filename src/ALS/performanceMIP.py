@@ -81,40 +81,35 @@ def performance_MIP(solver, variables, num_planes, mem_before, mem_after, num_ru
     Returns:
         dict: Dictionary containing all calculated metrics.
     """
+    print()
     print("=" * 60)
     print("Performance Metrics for MIP")
     print("=" * 60)
 
-    metrics = {}
-
     # Execution time
-    execution_time = calculate_execution_time(solver)
-    metrics['execution_time'] = execution_time
-    print(f"-> Execution time: {execution_time:.2f} seconds")
+    exec_time = calculate_execution_time(solver)
+    print(f"-> Execution time: {exec_time:.2f} seconds")
 
     # Number of variables
     num_variables = calculate_num_variables(solver)
-    metrics['num_variables'] = num_variables
     print(f"-> Number of variables in the model: {num_variables}")
 
     # Number of constraints
     num_constraints = calculate_num_constraints(solver)
-    metrics['num_constraints'] = num_constraints
     print(f"-> Number of constraints in the model: {num_constraints}")
 
     # Total penalty (if applicable)
+    total_penalty = 0
     if planes_data is not None:
         total_penalty = calculate_total_penalty(variables, planes_data)
-        metrics['total_penalty'] = total_penalty
         print(f"-> Total penalty: {total_penalty:.2f}")
     else:
         print("-> Total penalty not calculated (plane data not provided).")
     
     # Memory usage
-    memory_usage = calculate_memory_usage(mem_before, mem_after)
-    metrics['memory_usage'] = memory_usage
-    print(f"-> Memory usage: {memory_usage:.2f} MB")
+    mem_usage = calculate_memory_usage(mem_before, mem_after)
+    print(f"-> Memory usage: {mem_usage:.2f} MB")
     
     print("=" * 60)
-    return metrics
+    return exec_time, num_variables, num_constraints, total_penalty, mem_usage
     

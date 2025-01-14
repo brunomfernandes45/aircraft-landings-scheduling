@@ -35,21 +35,30 @@ class PerformanceTracker(cp_model.CpSolverSolutionCallback):
 
     def print_performance_metrics(self):
         """Prints solver performance metrics after solving."""
+        exec_time = self.getWallTime()
+        status = self.getStatus()
+        mem_usage = self.getMemoryUsage()
+        conflicts = self.getNumConflicts()
+        branches = self.getNumBranches()
+        best_objective = self.getBestObjectiveBound()
         print()
         print("=" * 60)
         print("Performance Metrics for CP")
         print("=" * 60)
-        print(f"-> Execution time (s): {self.getWallTime()}")
-        print(f"-> Solution Status: {self.getStatus()}")
-        print(f"-> Memory usage (MB): {self.getMemoryUsage()}")
-        print(f"-> Number of Conflicts: {self.getNumConflicts()}")
-        print(f"-> Number of Branches: {self.getNumBranches()}")
-        print(f"-> Best objective bound:{self.getBestObjectiveBound()}")
+        print(f"-> Execution time (s): {exec_time}")
+        print(f"-> Solution Status: {status}")
+        print(f"-> Memory usage (MB): {mem_usage}")
+        print(f"-> Number of Conflicts: {conflicts}")
+        print(f"-> Number of Branches: {branches}")
+        print(f"-> Best objective bound: {best_objective}")
         print("=" * 60)
+        
+        return exec_time, status, mem_usage, conflicts, branches, best_objective
      
 def performance_CP(solver, planes_data, mem_before, mem_after):        
     # Create a PerformanceTracker instance that will track solver performance
     tracker = PerformanceTracker(solver, planes_data, mem_before, mem_after)
 
     # Print performance metrics after solving
-    tracker.print_performance_metrics()
+    return tracker.print_performance_metrics()
+     
