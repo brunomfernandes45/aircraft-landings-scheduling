@@ -1,11 +1,11 @@
 from ortools.sat.python import cp_model
-from ALS.performanceCP import PerformanceTracker
+import psutil
 
 #----------------------------
 # SINGLE_RUNWAY
 #----------------------------
 
-def create_cp_model_single_runways(num_planes, freeze_time, planes_data, separation_times):
+def create_cp_model_single_runways(num_planes, planes_data, separation_times):
     # Create the CP-SAT model
     model = cp_model.CpModel()
 
@@ -127,23 +127,23 @@ def create_cp_model_single_runways(num_planes, freeze_time, planes_data, separat
     return model, variables
 
 
-def solve_single_runway_cp(num_planes, freeze_time, planes_data, separation_times):
+def solve_single_runway_cp(num_planes, planes_data, separation_times):
     """Builds and solves the single-runway CP model with a permutation approach."""
-    model, vars_ = create_or_tools_cp_model_with_permutation(
-        num_planes, freeze_time, planes_data, separation_times
+    model, vars_ = create_cp_model_single_runways(
+        num_planes, planes_data, separation_times
     )
 
     # Create solver instance
     solver = cp_model.CpSolver()
-    
-    # Create a PerformanceTracker instance that will track solver performance
-    tracker = PerformanceTracker(solver, planes_data)
+
+    # Memory Usage before the Solver
+    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
 
     # Solve the model with performance tracking
     status = solver.Solve(model)
-
-    # Print performance metrics after solving
-    tracker.print_performance_metrics()
+    
+    # Memory Usage after the Solver
+    memory_after = psutil.Process().memory_info().rss 
     
     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
         print("Status:", solver.StatusName(status))
@@ -172,13 +172,14 @@ def solve_single_runway_cp(num_planes, freeze_time, planes_data, separation_time
     else:
         print("No feasible/optimal solution found. Status:", solver.StatusName(status))
 
+    return solver, memory_before, memory_after
 
 #----------------------------
 # MULTIPLE RUNWAYS
 #----------------------------
 
 
-def create_cp_model_multiple_runways(num_planes, num_runways, freeze_time, planes_data, separation_times):
+def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separation_times):
     # Create the CP-SAT model
     model = cp_model.CpModel()
 
@@ -300,12 +301,11 @@ def create_cp_model_multiple_runways(num_planes, num_runways, freeze_time, plane
     return model, variables
 
 
-def solve_multiple_runways_cp(num_planes, num_runways, freeze_time, planes_data, separation_times, search_strategy):
+def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times):
     # Create the model and variables
     model, vars_ = create_cp_model_multiple_runways(
         num_planes,
         num_runways,
-        freeze_time,
         planes_data,
         separation_times
     )
@@ -324,16 +324,16 @@ def solve_multiple_runways_cp(num_planes, num_runways, freeze_time, planes_data,
     #     solver.parameters.search_branching = cp_model.VarBranchingPolicy.AUTOMATIC
     # else:
     #     raise ValueError(f"Unknown search strategy: {search_strategy}")
-    
-    # Create a PerformanceTracker instance that will track solver performance
-    tracker = PerformanceTracker(solver, planes_data)
+
+    # Memory Usage before the Solver
+    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
 
     # Solve the model with performance tracking
     status = solver.Solve(model)
-
-    # Print performance metrics after solving
-    tracker.print_performance_metrics()
-
+    
+    # Memory Usage after the Solver
+    memory_after = psutil.Process().memory_info().rss 
+    
     # If a solution is found, print results
     if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
         print("Status:", solver.StatusName(status))
@@ -365,3 +365,5 @@ def solve_multiple_runways_cp(num_planes, num_runways, freeze_time, planes_data,
 
     else:
         print("No feasible/optimal solution found. Status:", solver.StatusName(status))
+        
+    return solver, memory_before, memory_after

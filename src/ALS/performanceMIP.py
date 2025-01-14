@@ -56,20 +56,18 @@ def calculate_total_penalty(variables, planes_data):
         )
     return total_penalty
 
-def calculate_memory_usage():
+def calculate_memory_usage(memory_before, memory_after):
     """
     Measures the memory usage of the solver process during execution.
 
     Returns:
         float: Memory usage in megabytes (MB).
     """
-    process = psutil.Process()
-    memory_in_bytes = process.memory_info().rss
-    return memory_in_bytes / (1024 * 1024)  # Convert to MB
+    memory_usage = (memory_after - memory_before) / (1024 * 1024)  # MB
+    return memory_usage
 
 
-
-def summarize_metrics_MIP(solver, variables, num_planes, num_runways=None, planes_data=None):
+def performance_MIP(solver, variables, num_planes, mem_before, mem_after, num_runways=None, planes_data=None):
     """
     Calculates and prints metrics specific to MIP problems.
 
@@ -113,9 +111,10 @@ def summarize_metrics_MIP(solver, variables, num_planes, num_runways=None, plane
         print("-> Total penalty not calculated (plane data not provided).")
     
     # Memory usage
-    memory_usage = calculate_memory_usage()
+    memory_usage = calculate_memory_usage(mem_before, mem_after)
     metrics['memory_usage'] = memory_usage
     print(f"-> Memory usage: {memory_usage:.2f} MB")
     
     print("=" * 60)
     return metrics
+    

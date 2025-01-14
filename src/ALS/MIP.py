@@ -1,5 +1,5 @@
 from ortools.linear_solver import pywraplp
-from ALS.performanceMIP import summarize_metrics_MIP
+import psutil
 
 def create_mip_solver(
     num_planes,
@@ -235,18 +235,17 @@ def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_ru
     
     print("\n---------- Solving MIP ----------\n")
 
-    status = solver.Solve()
-
+    # Memory Usage before the Solver
+    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
+    
+    # Solve the model with performance tracking
+    status = solver.Solve()    
+    
+    # Memory Usage after the Solver
+    memory_after = psutil.Process().memory_info().rss 
+    
     if status == pywraplp.Solver.OPTIMAL:
         print(f"Optimal Cost: {solver.Objective().Value()}")
-        print()
-        metrics = summarize_metrics_MIP(
-            solver,
-            variables,
-            num_planes,
-            num_runways = 1,
-            planes_data = planes_data
-        )
         
         # print the landing times of the planes that did not land on the target time
         print("\nPlanes that did not land on the target time:")
@@ -270,3 +269,5 @@ def solve_multiple_runways_mip(num_planes, planes_data, separation_times, num_ru
         print("No optimal solution found.")
         if status == pywraplp.Solver.FEASIBLE:
             print("Best feasible solution found:", round(solver.Objective().Value(), 2))
+            
+    return solver, variables, num_planes, memory_before, memory_after, num_runways
