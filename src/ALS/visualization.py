@@ -1,19 +1,22 @@
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+from .utils import get_value
 
-def visualize_solution(num_planes, planes_data, vars_):
+def visualize_solution(solver, num_planes, planes_data, variables, approach):
     """
     Visualizes the landing times for each plane with labels, with improved aesthetics.
 
     Args:
+        solver (CP-SAT solver): The CP-SAT solver instance.
         num_planes (int): The number of planes.
         planes_data (list): A list of dictionaries containing plane data.
-        vars_ (dict): A dictionary containing the decision variables.
+        variables (dict): A dictionary containing the decision variables.
+        approach (str): The approach used to solve the problem.
     """
 
-    LABEL_FONT_SIZE = 10
-    TITLE_FONT_SIZE = 14
-    LEGEND_FONT_SIZE = 8
+    LABEL_FONT_SIZE = 12
+    TITLE_FONT_SIZE = 16
+    LEGEND_FONT_SIZE = 10
 
     # Define a harmonious color palette
     COLOR_TARGET = "#4c72b0"
@@ -23,7 +26,7 @@ def visualize_solution(num_planes, planes_data, vars_):
     COLOR_OPTIMAL_EQUAL_TARGET = "#8172b3"
     COLOR_EARLIEST_LATEST = "#646464"
 
-    plt.figure(figsize=(15, num_planes * 0.65))
+    plt.figure(figsize=(17, num_planes * 0.65))
     ax = plt.gca()
     plt.xlabel("Time", fontsize=LABEL_FONT_SIZE)
     plt.ylabel("Planes", fontsize=LABEL_FONT_SIZE)
@@ -37,7 +40,7 @@ def visualize_solution(num_planes, planes_data, vars_):
 
     # Sort planes by optimal landing time
     plane_order = sorted(
-        range(num_planes), key=lambda i: vars_["landing_time"][i].solution_value()
+        range(num_planes), key=lambda i: get_value(variables["landing_time"][i], approach, solver)
     )
 
     # Set y-axis ticks and labels based on the sorted order
@@ -129,11 +132,14 @@ def visualize_solution(num_planes, planes_data, vars_):
         earliest = planes_data[i]["earliest_landing_time"]
         latest = planes_data[i]["latest_landing_time"]
         target = planes_data[i]["target_landing_time"]
-        optimal = vars_["landing_time"][i].solution_value()
+        # optimal = variables["landing_time"][i].solution_value()
+        optimal = get_value(variables["landing_time"][i], approach, solver)
         max_optimal_time = max(max_optimal_time, optimal)
         min_earliest_time = min(min_earliest_time, earliest)
-        early_dev = vars_["early_deviation"][i].solution_value()
-        late_dev = vars_["late_deviation"][i].solution_value()
+        # early_dev = variables["early_deviation"][i].solution_value()
+        early_dev = get_value(variables["early_deviation"][i], approach, solver)
+        # late_dev = variables["late_deviation"][i].solution_value()
+        late_dev = get_value(variables["late_deviation"][i], approach, solver)
         penalty = (
             early_dev * planes_data[i]["penalty_early"]
             + late_dev * planes_data[i]["penalty_late"]
@@ -281,7 +287,7 @@ def visualize_solution(num_planes, planes_data, vars_):
     plt.legend(
         handles=legend_handles,
         loc="center left",
-        bbox_to_anchor=(1, 0.5),
+        bbox_to_anchor=(1.05, 0.5),
         fontsize=LEGEND_FONT_SIZE,
         title="Legend",
     )

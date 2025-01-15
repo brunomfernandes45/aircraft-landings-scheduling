@@ -62,3 +62,23 @@ def read_data(filename):
     except ValueError:
         print(f"-> Error: Error reading data in file '{filename}'.")
         return None, None, None, None
+
+def get_value(variable, approach, solver):
+    """
+    Retrieves the value of a variable from a dictionary.
+
+    Args:
+        dictionary (dict): The dictionary containing the variables.
+        variable_name (str): The name of the variable.
+        index (int): The index of the variable.
+        approach (str): The approach used to solve the problem.
+
+    Returns:
+        float: The value of the variable.
+    """
+    if approach == "CP":
+        return solver.Value(variable)
+    elif approach == "MIP":
+        return variable.solution_value()
+
+    return None
