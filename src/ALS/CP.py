@@ -131,11 +131,15 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
     return model, variables
 
 
-def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None):
+def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None,hint=False):
     """Builds and solves the single-runway CP model with a permutation approach."""
     model, vars_ = create_cp_model_single_runway(
         num_planes, planes_data, separation_times
     )
+
+    if hint:
+        for i in range(num_planes):
+            model.AddHint(vars_["landing_time"][i], planes_data[i]["target_landing_time"])
 
     # Create solver instance
     solver = cp_model.CpSolver()
@@ -366,7 +370,7 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     return model, variables
 
 
-def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times, decision_strategies=None):
+def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times, decision_strategies=None, hint=False):
     # Create the model and variables
     model, vars_ = create_cp_model_multiple_runways(
         num_planes,
@@ -374,6 +378,10 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
         planes_data,
         separation_times
     )
+
+    if hint:
+        for i in range(num_planes):
+            model.AddHint(landing_time[i], planes_data[i]["target_landing_time"])
 
     # Create the solver
     solver = cp_model.CpSolver()
@@ -474,3 +482,4 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
     # Return solver and memory usage info
     return solver, memory_before, memory_after
+
