@@ -52,13 +52,13 @@ def read_data(filename):
 
                 separation_times.append(separation_row)
 
-        print("Number of planes:", num_planes, "\n")
+        print("-> Number of planes:", num_planes, "\n")
         
         return num_planes, planes_data, separation_times
 
     except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
+        print(f"-> Error: File '{filename}' not found.")
         return None, None, None, None
     except ValueError:
-        print(f"Error: Error reading data in file '{filename}'.")
+        print(f"-> Error: Error reading data in file '{filename}'.")
         return None, None, None, None

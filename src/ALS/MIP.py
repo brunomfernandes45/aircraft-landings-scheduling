@@ -298,7 +298,7 @@ def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_
         )
 
     # Return the solver, variables, number of planes, memory usage info and the number of runways
-    return solver, variables, num_planes, memory_before, memory_after
+    return solver, memory_before, memory_after
 
 
 def create_mip_model_single_runway(num_planes, planes_data, separation_times):
@@ -550,4 +550,4 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
             "-> No feasible/optimal solution found. Status:", solver.StatusName(status)
         )
 
-    return solver, variables, num_planes, memory_before, memory_after
+    return solver, memory_before, memory_after
