@@ -60,7 +60,7 @@ def performance_MIP(solver, mem_before, mem_after):
     print("=" * 60)
     print("\t\tPerformance Metrics for MIP")
     print("=" * 60, "\n")
-
+    
     # Execution time
     exec_time = calculate_execution_time(solver)
     print(f"-> Execution time: {exec_time:.2f} seconds")

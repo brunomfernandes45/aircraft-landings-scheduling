@@ -19,8 +19,8 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
     E = [p["earliest_landing_time"] for p in planes_data]  # Earliest landing times
     T = [p["target_landing_time"]   for p in planes_data]  # Target landing times
     L = [p["latest_landing_time"]   for p in planes_data]  # Latest landing times
-    cost_e = [p["penalty_early"]    for p in planes_data]  # Penalty for earliness
-    cost_l = [p["penalty_late"]     for p in planes_data]  # Penalty for lateness
+    cost_e = [p["penalty_early"]    for p in planes_data]  # Penalty for early_deviation
+    cost_l = [p["penalty_late"]     for p in planes_data]  # Penalty for late_deviation
 
     # ------------------------------------------------------------------
     # 2) VARIABLE CREATION
@@ -38,20 +38,20 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
         for i in range(num_planes)
     ]
 
-    # 'earliness[i]' measures how many time units plane i lands before target
-    earliness = [
+    # 'early_deviation[i]' measures how many time units plane i lands before target
+    early_deviation = [
         model.NewIntVar(
             0,
-            max(T[i] - E[i], 0),  # Max possible earliness
-            f"earliness_{i}")
+            max(T[i] - E[i], 0),  # Max possible early_deviation
+            f"early_deviation_{i}")
         for i in range(num_planes)]
 
-    # 'lateness[i]' measures how many time units plane i lands after target
-    lateness = [
+    # 'late_deviation[i]' measures how many time units plane i lands after target
+    late_deviation = [
         model.NewIntVar(
             0,
-            max(L[i] - T[i], 0),  # Max possible lateness
-            f"lateness_{i}")
+            max(L[i] - T[i], 0),  # Max possible late_deviation
+            f"late_deviation_{i}")
         for i in range(num_planes)]
 
     # Boolean variables: iBeforeJ[i][j] = True if plane i lands before plane j (i < j).
@@ -80,12 +80,12 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
         model.Add(landing_time[i] >= E[i])  # no earlier than E[i]
         model.Add(landing_time[i] <= L[i])  # no later than L[i]
 
-    # (3.3) Earliness / lateness definitions
+    # (3.3) early_deviation / late_deviation definitions
     for i in range(num_planes):
-        model.Add(earliness[i] >= T[i] - landing_time[i])
-        model.Add(earliness[i] >= 0)
-        model.Add(lateness[i]  >= landing_time[i] - T[i])
-        model.Add(lateness[i]  >= 0)
+        model.Add(early_deviation[i] >= T[i] - landing_time[i])
+        model.Add(early_deviation[i] >= 0)
+        model.Add(late_deviation[i]  >= landing_time[i] - T[i])
+        model.Add(late_deviation[i]  >= 0)
 
     # (3.4) Separation constraints using the boolean iBeforeJ
     # For each pair (i, j) with i < j, if plane i lands before j, then
@@ -108,12 +108,12 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
             ).OnlyEnforceIf(iBeforeJ[i][j].Not())
 
     # ------------------------------------------------------------------
-    # 4) OBJECTIVE FUNCTION: MINIMIZE TOTAL EARLINESS + LATENESS COST
+    # 4) OBJECTIVE FUNCTION: MINIMIZE TOTAL early_deviation + late_deviation COST
     # ------------------------------------------------------------------
     cost_terms = []
     for i in range(num_planes):
-        cost_terms.append(cost_e[i] * earliness[i])
-        cost_terms.append(cost_l[i] * lateness[i])
+        cost_terms.append(cost_e[i] * early_deviation[i])
+        cost_terms.append(cost_l[i] * late_deviation[i])
 
     model.Minimize(sum(cost_terms))
 
@@ -123,8 +123,8 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
     variables = {
         "position": position,
         "landing_time": landing_time,
-        "earliness": earliness,
-        "lateness": lateness,
+        "early_deviation": early_deviation,
+        "late_deviation": late_deviation,
         "iBeforeJ": iBeforeJ
     }
 
@@ -179,8 +179,8 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
 
     position = vars_["position"]
     landing_time = vars_["landing_time"]
-    earliness = vars_["earliness"]
-    lateness = vars_["lateness"]
+    early_deviation = vars_["early_deviation"]
+    late_deviation = vars_["late_deviation"]
     
     if status == cp_model.OPTIMAL:
         # -------------------------------
@@ -190,9 +190,9 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
 
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
-            # If earliness or lateness > 0, plane missed its target
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
+            # If early_deviation or late_deviation > 0, plane missed its target
             if e_ > 0 or L_ > 0:
                 # Calculate penalty
                 penalty = (
@@ -214,8 +214,8 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
         # You can optionally also list planes that missed their target
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
             if e_ > 0 or L_ > 0:
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]
@@ -230,7 +230,7 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
     else:
         print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-    return solver, memory_before, memory_after
+    return solver, vars_, memory_before, memory_after
 
 # ----------------------------
 # MULTIPLE RUNWAYS
@@ -263,11 +263,11 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     # 'landing_time[i]' is the integer variable indicating the time plane i lands
     landing_time = [model.NewIntVar(0, 10000000, f"landing_time_{i}") for i in range(num_planes)]
     
-    # 'earliness[i]' is the non-negative amount of time plane i lands before its target
-    earliness = [model.NewIntVar(0, max(T[i] - E[i], 0), f"earliness_{i}") for i in range(num_planes)]
+    # 'early_deviation[i]' is the non-negative amount of time plane i lands before its target
+    early_deviation = [model.NewIntVar(0, max(T[i] - E[i], 0), f"early_deviation_{i}") for i in range(num_planes)]
     
-    # 'lateness[i]' is the non-negative amount of time plane i lands after its target
-    lateness = [model.NewIntVar(0, max(L[i] - T[i], 0), f"lateness_{i}") for i in range(num_planes)]
+    # 'late_deviation[i]' is the non-negative amount of time plane i lands after its target
+    late_deviation = [model.NewIntVar(0, max(L[i] - T[i], 0), f"late_deviation_{i}") for i in range(num_planes)]
     
     # 'runway[i]' is the index of the runway on which plane i lands
     runway = [model.NewIntVar(0, num_runways - 1, f"runway_{i}") for i in range(num_planes)]
@@ -301,20 +301,20 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     model.AddAllDifferent(position)
 
     # Time window constraints: each plane i must land between its earliest and latest times
-    # Also, define earliness and lateness relative to the target time
+    # Also, define early_deviation and late_deviation relative to the target time
     for i in range(num_planes):
         # landing_time[i] >= earliest landing time
         model.Add(landing_time[i] >= E[i])
         # landing_time[i] <= latest landing time
         model.Add(landing_time[i] <= L[i])
-        # earliness[i] >= T[i] - landing_time[i] (early if we land before target)
-        model.Add(earliness[i] >= T[i] - landing_time[i])
-        # earliness[i] >= 0
-        model.Add(earliness[i] >= 0)
-        # lateness[i] >= landing_time[i] - T[i] (late if we land after target)
-        model.Add(lateness[i] >= landing_time[i] - T[i])
-        # lateness[i] >= 0
-        model.Add(lateness[i] >= 0)
+        # early_deviation[i] >= T[i] - landing_time[i] (early if we land before target)
+        model.Add(early_deviation[i] >= T[i] - landing_time[i])
+        # early_deviation[i] >= 0
+        model.Add(early_deviation[i] >= 0)
+        # late_deviation[i] >= landing_time[i] - T[i] (late if we land after target)
+        model.Add(late_deviation[i] >= landing_time[i] - T[i])
+        # late_deviation[i] >= 0
+        model.Add(late_deviation[i] >= 0)
 
     # Separation constraints: if plane i lands before j on the same runway,
     # landing_time[j] must be at least landing_time[i] + separation_times[i][j], and vice-versa
@@ -341,11 +341,11 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     # ---------------------
     # OBJECTIVE FUNCTION
     # ---------------------
-    # Minimize the total cost of earliness and lateness
+    # Minimize the total cost of early_deviation and late_deviation
     cost_terms = []
     for i in range(num_planes):
-        cost_terms.append(cost_e[i] * earliness[i])
-        cost_terms.append(cost_l[i] * lateness[i])
+        cost_terms.append(cost_e[i] * early_deviation[i])
+        cost_terms.append(cost_l[i] * late_deviation[i])
     model.Minimize(sum(cost_terms))
 
     # ---------------------
@@ -354,8 +354,8 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     variables = {
         "position": position,
         "landing_time": landing_time,
-        "earliness": earliness,
-        "lateness": lateness,
+        "early_deviation": early_deviation,
+        "late_deviation": late_deviation,
         "runway": runway,
         "iBeforeJ": iBeforeJ,
         "same_runway": same_runway
@@ -377,6 +377,8 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
     # Create the solver
     solver = cp_model.CpSolver()
+    
+    solver.parameters.search_branching 
 
     print("-> Number of decision variables created:", len(model.Proto().variables))
     print("-> Number of constraints:", len(model.Proto().constraints))
@@ -417,8 +419,8 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
     # Unpack variables for easy reference
     position = vars_["position"]
     landing_time = vars_["landing_time"]
-    earliness = vars_["earliness"]
-    lateness = vars_["lateness"]
+    early_deviation = vars_["early_deviation"]
+    late_deviation = vars_["late_deviation"]
     runway = vars_["runway"]
 
     # 1) Check solver status for CP-SAT
@@ -430,9 +432,9 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
-            # If earliness or lateness > 0, plane missed its target
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
+            # If early_deviation or late_deviation > 0, plane missed its target
             if e_ > 0 or L_ > 0:
                 # Calculate penalty
                 penalty = (
@@ -455,8 +457,8 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
         # You can optionally also list planes that missed their target
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
             if e_ > 0 or L_ > 0:
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]

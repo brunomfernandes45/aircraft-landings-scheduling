@@ -15,7 +15,7 @@ def create_mip_model_multiple_runways(
     # Create the LP solver
     solver = pywraplp.Solver.CreateSolver("SAT")  # Using the SAT solver
     variables = {}
-
+    
     # Decision Variables
     # x_i: Landing time for plane i
     # (1)
@@ -27,7 +27,7 @@ def create_mip_model_multiple_runways(
         )
         for i in range(num_planes)
     ]
-    variables["landing_times"] = landing_times
+    variables["landing_time"] = landing_times
 
     # delta_ij:  Fraction representing if plane i lands before plane j (0 to 1)
     # Note: In a pure LP model, we relax the integrality constraint.
@@ -246,9 +246,9 @@ def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_
     # Memory Usage after the Solver
     memory_after = psutil.Process().memory_info().rss
 
-    landing_time = variables["landing_times"]
-    earliness = variables["early_deviation"]
-    lateness = variables["late_deviation"]
+    landing_time = variables["landing_time"]
+    early_deviation = variables["early_deviation"]
+    late_deviation = variables["late_deviation"]
 
     if status == pywraplp.Solver.OPTIMAL:
         print(f"-> Optimal Cost: {solver.Objective().Value()}")
@@ -257,14 +257,14 @@ def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_
         for i in range(num_planes):
             e_ = variables["early_deviation"][i].solution_value()
             L_ = variables["late_deviation"][i].solution_value()
-            # If earliness or lateness > 0, plane missed its target
+            # If early_deviation or late_deviation > 0, plane missed its target
             if e_ > 0 or L_ > 0:
                 # Calculate penalty
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]
                     + L_ * planes_data[i]["penalty_late"]
                 )
-                landing_t = variables["landing_times"][i]
+                landing_t = variables["landing_time"][i].solution_value()
                 target_t = planes_data[i]["target_landing_time"]
                 print(
                     f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
@@ -280,8 +280,8 @@ def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_
         # You can optionally also list planes that missed their target
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
             if e_ > 0 or L_ > 0:
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]
@@ -321,7 +321,7 @@ def create_mip_model_single_runway(num_planes, planes_data, separation_times):
         )
         for i in range(num_planes)
     ]
-    variables["landing_times"] = landing_times
+    variables["landing_time"] = landing_times
 
     # delta_ij:  Fraction representing if plane i lands before plane j (0 to 1)
     # Note: In a pure LP model, we relax the integrality constraint.
@@ -499,9 +499,9 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
     # Memory Usage after the Solver
     memory_after = psutil.Process().memory_info().rss
 
-    landing_time = variables["landing_times"]
-    earliness = variables["early_deviation"]
-    lateness = variables["late_deviation"]
+    landing_time = variables["landing_time"]
+    early_deviation = variables["early_deviation"]
+    late_deviation = variables["late_deviation"]
 
     if status == pywraplp.Solver.OPTIMAL:
         print(f"-> Optimal Cost: {solver.Objective().Value()}")
@@ -510,14 +510,14 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
         for i in range(num_planes):
             e_ = variables["early_deviation"][i].solution_value()
             L_ = variables["late_deviation"][i].solution_value()
-            # If earliness or lateness > 0, plane missed its target
+            # If early_deviation or late_deviation > 0, plane missed its target
             if e_ > 0 or L_ > 0:
                 # Calculate penalty
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]
                     + L_ * planes_data[i]["penalty_late"]
                 )
-                landing_t = variables["landing_times"][i]
+                landing_t = variables["landing_time"][i].solution_value()
                 target_t = planes_data[i]["target_landing_time"]
                 print(
                     f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
@@ -533,8 +533,8 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
         # You can optionally also list planes that missed their target
         print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
-            e_ = solver.Value(earliness[i])
-            L_ = solver.Value(lateness[i])
+            e_ = solver.Value(early_deviation[i])
+            L_ = solver.Value(late_deviation[i])
             if e_ > 0 or L_ > 0:
                 penalty = (
                     e_ * planes_data[i]["penalty_early"]
@@ -550,4 +550,4 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
             "-> No feasible/optimal solution found. Status:", solver.StatusName(status)
         )
 
-    return solver, memory_before, memory_after
+    return solver, variables, memory_before, memory_after
