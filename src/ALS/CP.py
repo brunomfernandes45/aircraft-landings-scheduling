@@ -131,7 +131,7 @@ def create_cp_model_single_runway(num_planes, planes_data, separation_times):
     return model, variables
 
 
-def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None,hint=False):
+def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None,hint=False, search_strategy=cp_model.AUTOMATIC_SEARCH):
     """Builds and solves the single-runway CP model with a permutation approach."""
     model, vars_ = create_cp_model_single_runway(
         num_planes, planes_data, separation_times
@@ -143,6 +143,9 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
 
     # Create solver instance
     solver = cp_model.CpSolver()
+
+    # Set search strategy
+    solver.parameters.search_branching = search_strategy
 
     print("-> Number of decision variables created:", len(model.Proto().variables))
     print("-> Number of constraints:", len(model.Proto().constraints))
@@ -370,7 +373,7 @@ def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separ
     return model, variables
 
 
-def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times, decision_strategies=None, hint=False):
+def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_times, decision_strategies=None, hint=False,search_strategy=cp_model.AUTOMATIC_SEARCH):
     # Create the model and variables
     model, vars_ = create_cp_model_multiple_runways(
         num_planes,
@@ -381,12 +384,14 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
     if hint:
         for i in range(num_planes):
-            model.AddHint(landing_time[i], planes_data[i]["target_landing_time"])
+            model.AddHint(vars_["landing_time"][i], planes_data[i]["target_landing_time"])
 
     # Create the solver
     solver = cp_model.CpSolver()
     
-    solver.parameters.search_branching 
+    # Set search strategy
+    solver.parameters.search_branching = search_strategy
+
 
     print("-> Number of decision variables created:", len(model.Proto().variables))
     print("-> Number of constraints:", len(model.Proto().constraints))
