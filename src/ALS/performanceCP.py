@@ -60,16 +60,23 @@ class PerformanceTracker(cp_model.CpSolverSolutionCallback):
         
         metrics = self.get_performance_metrics()
         
+        exec_time = metrics["exec_time"]
+        status = metrics["status"]
+        mem_usage = metrics["mem_usage"]
+        conflicts = metrics["conflicts"]
+        branches = metrics["branches"]
+        best_objective = metrics["best_objective"]
+        
         print()
         print("=" * 60)
         print("\t\tPerformance Metrics for CP")
         print("=" * 60, "\n")
-        print(f"-> Execution time (s): {metrics.exec_time}")
-        print(f"-> Solution Status: {metrics.status}")
-        print(f"-> Memory usage (MB): {metrics.mem_usage}")
-        print(f"-> Number of Conflicts: {metrics.conflicts}")
-        print(f"-> Number of Branches: {metrics.branches}")
-        print(f"-> Best objective bound: {metrics.best_objective}")
+        print(f"-> Execution time (s): {exec_time:.2f}")
+        print(f"-> Solution Status: {status}")
+        print(f"-> Memory usage (MB): {mem_usage:.2f}")
+        print(f"-> Number of Conflicts: {conflicts}")
+        print(f"-> Number of Branches: {branches}")
+        print(f"-> Best objective bound: {best_objective:.1f}")
         print("\n" + "=" * 60)
         
         return metrics 
