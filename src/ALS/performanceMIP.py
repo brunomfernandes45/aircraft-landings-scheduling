@@ -53,6 +53,7 @@ def performance_MIP(solver, mem_before, mem_after):
         solver: Instance of the OR-Tools solver.
         mem_before (int): Memory usage before solving the problem.
         mem_after (int): Memory usage after solving the problem.
+
     Returns:
         dict: Dictionary containing all calculated metrics.
     """
@@ -82,4 +83,15 @@ def performance_MIP(solver, mem_before, mem_after):
     print(f"-> Memory usage: {mem_usage:.2f} MB")
 
     print("\n" + "=" * 60)
-    return exec_time, num_variables, num_constraints, total_penalty, mem_usage
+    
+    # Create and return a dictionary with the metrics
+    metrics = {
+        "exec_time": exec_time,
+        "num_variables": num_variables,
+        "num_constraints": num_constraints,
+        "total_penalty": total_penalty,
+        "memory_usage": mem_usage
+    }
+    
+    return metrics
+
