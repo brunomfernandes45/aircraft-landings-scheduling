@@ -58,8 +58,8 @@ def performance_MIP(solver, mem_before, mem_after):
     """
     print()
     print("=" * 60)
-    print("Performance Metrics for MIP")
-    print("=" * 60)
+    print("\t\tPerformance Metrics for MIP")
+    print("=" * 60, "\n")
 
     # Execution time
     exec_time = calculate_execution_time(solver)
@@ -76,11 +76,10 @@ def performance_MIP(solver, mem_before, mem_after):
     # Total penalty
     total_penalty = solver.Objective().Value()
     print(f"-> Total penalty: {total_penalty:.1f}")
-    
+
     # Memory usage
     mem_usage = calculate_memory_usage(mem_before, mem_after)
     print(f"-> Memory usage: {mem_usage:.2f} MB")
-    
-    print("=" * 60)
+
+    print("\n" + "=" * 60)
     return exec_time, num_variables, num_constraints, total_penalty, mem_usage
-    

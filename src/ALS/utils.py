@@ -12,8 +12,9 @@ def read_data(filename):
               the data for a plane.
             - separation_times (list of lists): A 2D list of separation times.
     """
-    
-    print("---------- Reading data from", filename.split('/')[-1], "----------\n")
+    print("=" * 60)
+    print("\t       Reading data from", filename.split('/')[-1])
+    print("=" * 60, "\n")
     
     try:
         with open(filename, "r") as f:

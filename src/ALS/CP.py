@@ -1,13 +1,13 @@
 from ortools.sat.python import cp_model
 import psutil
 
-#----------------------------
+# ----------------------------
 # SINGLE_RUNWAY
-#----------------------------
+# ----------------------------
 
-def create_cp_model_single_runways(num_planes, planes_data, separation_times):
+def create_cp_model_single_runway(num_planes, planes_data, separation_times):
     print("=" * 60)
-    print("\t\t    Creating CP model") 
+    print("\t\t     Creating CP model") 
     print("=" * 60, "\n")
     
     # Create the CP-SAT model
@@ -133,15 +133,15 @@ def create_cp_model_single_runways(num_planes, planes_data, separation_times):
 
 def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_strategies=None):
     """Builds and solves the single-runway CP model with a permutation approach."""
-    model, vars_ = create_cp_model_single_runways(
+    model, vars_ = create_cp_model_single_runway(
         num_planes, planes_data, separation_times
     )
 
     # Create solver instance
     solver = cp_model.CpSolver()
 
-    print("Number of decision variables created:", len(model.Proto().variables))
-    print("Number of constraints:", len(model.Proto().constraints))
+    print("-> Number of decision variables created:", len(model.Proto().variables))
+    print("-> Number of constraints:", len(model.Proto().constraints))
 
     print("\n" + "=" * 60)
     print("\t\t\tSolving CP")
@@ -162,7 +162,7 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
                 for var_name in var_names:
                     var_list.extend(vars_.get(var_name, []))
             else:
-                raise ValueError("O campo 'variables' deve ser uma string ou uma lista de strings.")
+                raise ValueError("The 'variables' field must be a string or list of strings.")
             
             # Aplicar a estratégia ao conjunto de variáveis
             model.AddDecisionStrategy(
@@ -186,9 +186,9 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
         # -------------------------------
         # Print as if it were MIP's OPTIMAL
         # -------------------------------
-        print(f"Optimal Cost: {solver.ObjectiveValue()}")
+        print(f"-> Optimal Cost: {solver.ObjectiveValue()}")
 
-        print("\nPlanes that did not land on the target time:")
+        print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
             e_ = solver.Value(earliness[i])
             L_ = solver.Value(lateness[i])
@@ -202,17 +202,17 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
                 landing_t = solver.Value(landing_time[i])
                 target_t = planes_data[i]["target_landing_time"]
                 print(
-                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                    f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
                 )
 
     elif status == cp_model.FEASIBLE:
         # -------------------------------
         # No optimal solution
         # -------------------------------
-        print("Best feasible solution found:", round(solver.ObjectiveValue(), 2))
+        print("-> Best feasible solution found:", round(solver.ObjectiveValue(), 2))
 
         # You can optionally also list planes that missed their target
-        print("\nPlanes that did not land on the target time:")
+        print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
             e_ = solver.Value(earliness[i])
             L_ = solver.Value(lateness[i])
@@ -224,22 +224,22 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
                 landing_t = solver.Value(landing_time[i])
                 target_t = planes_data[i]["target_landing_time"]
                 print(
-                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                    f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
                 )
 
     else:
-        print("No feasible/optimal solution found. Status:", solver.StatusName(status))
+        print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
     return solver, memory_before, memory_after
 
-#----------------------------
+# ----------------------------
 # MULTIPLE RUNWAYS
-#----------------------------
+# ----------------------------
 
 
 def create_cp_model_multiple_runways(num_planes, num_runways, planes_data, separation_times):
     print("=" * 60)
-    print("\t\t    Creating CP model")
+    print("\t\t     Creating CP model")
     print("=" * 60, "\n")
 
     # Create the CP-SAT model
@@ -378,8 +378,8 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
     # Create the solver
     solver = cp_model.CpSolver()
 
-    print("Number of decision variables created:", len(model.Proto().variables))
-    print("Number of constraints:", len(model.Proto().constraints))
+    print("-> Number of decision variables created:", len(model.Proto().variables))
+    print("-> Number of constraints:", len(model.Proto().constraints))
 
     print("\n" + "=" * 60)
     print("\t\t\tSolving CP")
@@ -399,8 +399,8 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
                 for var_name in var_names:
                     var_list.extend(vars_.get(var_name, []))
             else:
-                raise ValueError("O campo 'variables' deve ser uma string ou uma lista de strings.")
-            
+                raise ValueError("The 'variables' field must be a string or list of strings.")
+
             # Aplicar a estratégia ao conjunto de variáveis
             model.AddDecisionStrategy(
                 var_list,
@@ -426,9 +426,9 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
         # -------------------------------
         # Print as if it were MIP's OPTIMAL
         # -------------------------------
-        print(f"Optimal Cost: {solver.ObjectiveValue()}")
+        print(f"-> Optimal Cost: {solver.ObjectiveValue()}")
 
-        print("\nPlanes that did not land on the target time:")
+        print("\n-> Planes that did not land on the target time:")
         for i in range(num_planes):
             e_ = solver.Value(earliness[i])
             L_ = solver.Value(lateness[i])
@@ -442,34 +442,33 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
                 landing_t = solver.Value(landing_time[i])
                 target_t = planes_data[i]["target_landing_time"]
                 print(
-                    f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                    f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
                 )
 
-    else:
+    elif status == cp_model.FEASIBLE:
         # -------------------------------
         # No optimal solution
         # -------------------------------
-        print("No optimal solution found.")
+        print("-> No optimal solution found.")
+        print("-> Best feasible solution found:", round(solver.ObjectiveValue(), 2))
 
-        # If still FEASIBLE, show best known cost
-        if status == cp_model.FEASIBLE:
-            print("Best feasible solution found:", round(solver.ObjectiveValue(), 2))
-
-            # You can optionally also list planes that missed their target
-            print("\nPlanes that did not land on the target time:")
-            for i in range(num_planes):
-                e_ = solver.Value(earliness[i])
-                L_ = solver.Value(lateness[i])
-                if e_ > 0 or L_ > 0:
-                    penalty = (
-                        e_ * planes_data[i]["penalty_early"]
-                        + L_ * planes_data[i]["penalty_late"]
-                    )
-                    landing_t = solver.Value(landing_time[i])
-                    target_t = planes_data[i]["target_landing_time"]
-                    print(
-                        f"Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
-                    )
+        # You can optionally also list planes that missed their target
+        print("\n-> Planes that did not land on the target time:")
+        for i in range(num_planes):
+            e_ = solver.Value(earliness[i])
+            L_ = solver.Value(lateness[i])
+            if e_ > 0 or L_ > 0:
+                penalty = (
+                    e_ * planes_data[i]["penalty_early"]
+                    + L_ * planes_data[i]["penalty_late"]
+                )
+                landing_t = solver.Value(landing_time[i])
+                target_t = planes_data[i]["target_landing_time"]
+                print(
+                    f"  -> Plane {i}: {landing_t} | Target Time: {target_t} | Penalty: {penalty}"
+                )
+    else:
+        print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
     # Return solver and memory usage info
     return solver, memory_before, memory_after
