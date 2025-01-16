@@ -229,22 +229,21 @@ def create_mip_model_multiple_runways(
     return solver, variables
 
 
-def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_times):
+def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_times, hint=False):
     solver, variables = create_mip_model_multiple_runways(
         num_planes, planes_data, separation_times, num_runways
     )
+    
+    if hint:
+        for i in range(num_planes):
+            solver.AddHint(variables["landing_time"][i], planes_data[i]["target_landing_time"])
+    
     print("\n" + "=" * 60)
     print("\t\t\tSolving MIP")
     print("=" * 60, "\n")
 
-    # Memory Usage before the Solver
-    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
-
     # Solve the model with performance tracking
     status = solver.Solve()
-
-    # Memory Usage after the Solver
-    memory_after = psutil.Process().memory_info().rss
 
     landing_time = variables["landing_time"]
     early_deviation = variables["early_deviation"]
@@ -297,8 +296,8 @@ def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_
             "-> No feasible/optimal solution found. Status:", solver.StatusName(status)
         )
 
-    # Return the solver, variables, number of planes, memory usage info and the number of runways
-    return solver, memory_before, memory_after
+    # Return the solver, variables, number of planes and the number of runways
+    return solver
 
 
 def create_mip_model_single_runway(num_planes, planes_data, separation_times):
@@ -482,22 +481,26 @@ def create_mip_model_single_runway(num_planes, planes_data, separation_times):
     return solver, variables
 
 
-def solve_single_runway_mip(num_planes, planes_data, separation_times):
+def solve_single_runway_mip(num_planes, planes_data, separation_times, hint=False):
     solver, variables = create_mip_model_single_runway(
         num_planes, planes_data, separation_times
     )
+
+    if hint:
+        # get all the target landing times to a list
+        target_times = [planes_data[i]["target_landing_time"] for i in range(num_planes)]
+        
+        for i in range(num_planes):
+            solver.SetHint(
+                variables["landing_time"], target_times
+            )
+            
     print("\n" + "=" * 60)
     print("\t\t\tSolving MIP")
     print("=" * 60, "\n")
 
-    # Memory Usage before the Solver
-    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
-
     # Solve the model with performance tracking
     status = solver.Solve()
-
-    # Memory Usage after the Solver
-    memory_after = psutil.Process().memory_info().rss
 
     landing_time = variables["landing_time"]
     early_deviation = variables["early_deviation"]
@@ -550,4 +553,4 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times):
             "-> No feasible/optimal solution found. Status:", solver.StatusName(status)
         )
 
-    return solver, variables, memory_before, memory_after
+    return solver, variables

@@ -155,9 +155,6 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
     print("=" * 60, "\n")
 
 
-    # Memory Usage before the Solver
-    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
-
     if decision_strategies:
         for strategy in decision_strategies:
             # Obter as variáveis a partir do nome fornecido
@@ -180,9 +177,6 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
 
     # Solve the model with performance tracking
     status = solver.Solve(model)
-    
-    # Memory Usage after the Solver
-    memory_after = psutil.Process().memory_info().rss 
 
     position = vars_["position"]
     landing_time = vars_["landing_time"]
@@ -237,7 +231,7 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
     else:
         print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-    return solver, vars_, memory_before, memory_after
+    return solver, vars_
 
 # ----------------------------
 # MULTIPLE RUNWAYS
@@ -400,9 +394,6 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
     print("\t\t\tSolving CP")
     print("=" * 60, "\n")
 
-    # Memory Usage before the Solver
-    memory_before = psutil.Process().memory_info().rss  # Memory in bytes
-
     if decision_strategies:
         for strategy in decision_strategies:
             # Obter as variáveis a partir do nome fornecido
@@ -425,9 +416,6 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
 
     # Solve the model
     status = solver.Solve(model)
-
-    # Memory Usage after the Solver
-    memory_after = psutil.Process().memory_info().rss
 
     # Unpack variables for easy reference
     position = vars_["position"]
@@ -485,6 +473,6 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
     else:
         print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-    # Return solver and memory usage info
-    return solver, memory_before, memory_after
+    # Return solver
+    return solver
 

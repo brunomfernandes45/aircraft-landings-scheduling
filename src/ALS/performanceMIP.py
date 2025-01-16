@@ -34,25 +34,12 @@ def calculate_num_constraints(solver):
     """
     return solver.NumConstraints()
 
-def calculate_memory_usage(memory_before, memory_after):
-    """
-    Measures the memory usage of the solver process during execution.
-
-    Returns:
-        float: Memory usage in megabytes (MB).
-    """
-    memory_usage = (memory_after - memory_before) / (1024 * 1024)  # MB
-    return memory_usage
-
-
-def performance_MIP(solver, mem_before, mem_after):
+def performance_MIP(solver):
     """
     Calculates and prints metrics specific to MIP problems.
 
     Args:
         solver: Instance of the OR-Tools solver.
-        mem_before (int): Memory usage before solving the problem.
-        mem_after (int): Memory usage after solving the problem.
 
     Returns:
         dict: Dictionary containing all calculated metrics.
@@ -78,10 +65,6 @@ def performance_MIP(solver, mem_before, mem_after):
     total_penalty = solver.Objective().Value()
     print(f"-> Total penalty: {total_penalty:.1f}")
 
-    # Memory usage
-    mem_usage = calculate_memory_usage(mem_before, mem_after)
-    print(f"-> Memory usage: {mem_usage:.2f} MB")
-
     print("\n" + "=" * 60)
     
     # Create and return a dictionary with the metrics
@@ -90,7 +73,6 @@ def performance_MIP(solver, mem_before, mem_after):
         "num_variables": num_variables,
         "num_constraints": num_constraints,
         "total_penalty": total_penalty,
-        "memory_usage": mem_usage
     }
     
     return metrics

@@ -8,7 +8,7 @@
 
 The Aircraft Landing Scheduling (ALS) project addresses the problem of coordinating the landing of multiple aircraft on one or more runways while respecting critical constraints. These constraints include separation times between planes, runway availability, and penalties for early or late landings. The goal is to determine the optimal landing schedule while minimizing total penalties and ensuring safe operations.
 
-This project uses both Constraint Programming (CP) and Mixed-Integer Programming (MIP) techniques to solve the problem under various configurations. Different strategies for branching, variable selection, and value selection are tested to evaluate their impact on solution quality and performance. Results are analyzed for both single and multiple runway scenarios, and key metrics such as execution time, memory usage, and success rates are recorded.
+This project uses both Constraint Programming (CP) and Mixed-Integer Programming (MIP) techniques to solve the problem under various configurations. Different strategies for branching, variable selection, and value selection are tested to evaluate their impact on solution quality and performance. Results are analyzed for both single and multiple runway scenarios, and key metrics such as execution time and success rates are recorded.
 
 The repository is structured to include the implementation of solvers, utility functions for data preprocessing, performance evaluation scripts, and visualization tools to interpret the results. Input datasets, located in the `data` folder, define the aircraft and runway configurations for each test case.
 
