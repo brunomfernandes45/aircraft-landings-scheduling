@@ -15,7 +15,7 @@ def create_mip_model_multiple_runways(
     # Create the LP solver
     solver = pywraplp.Solver.CreateSolver("SAT")  # Using the SAT solver
     variables = {}
-    
+
     # Decision Variables
     # x_i: Landing time for plane i
     # (1)
@@ -229,15 +229,22 @@ def create_mip_model_multiple_runways(
     return solver, variables
 
 
-def solve_multiple_runways_mip(num_planes, num_runways, planes_data, separation_times, hint=False):
+def solve_multiple_runways_mip(
+    num_planes, num_runways, planes_data, separation_times, hint=False
+):
     solver, variables = create_mip_model_multiple_runways(
         num_planes, planes_data, separation_times, num_runways
     )
-    
+
     if hint:
+        # get all the target landing times to a list
+        target_times = [
+            planes_data[i]["target_landing_time"] for i in range(num_planes)
+        ]
+
         for i in range(num_planes):
-            solver.AddHint(variables["landing_time"][i], planes_data[i]["target_landing_time"])
-    
+            solver.SetHint(variables["landing_time"], target_times)
+
     print("\n" + "=" * 60)
     print("\t\t\tSolving MIP")
     print("=" * 60, "\n")
@@ -488,13 +495,13 @@ def solve_single_runway_mip(num_planes, planes_data, separation_times, hint=Fals
 
     if hint:
         # get all the target landing times to a list
-        target_times = [planes_data[i]["target_landing_time"] for i in range(num_planes)]
-        
+        target_times = [
+            planes_data[i]["target_landing_time"] for i in range(num_planes)
+        ]
+
         for i in range(num_planes):
-            solver.SetHint(
-                variables["landing_time"], target_times
-            )
-            
+            solver.SetHint(variables["landing_time"], target_times)
+
     print("\n" + "=" * 60)
     print("\t\t\tSolving MIP")
     print("=" * 60, "\n")
