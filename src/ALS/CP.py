@@ -231,7 +231,7 @@ def solve_single_runway_cp(num_planes, planes_data, separation_times, decision_s
     else:
         print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
-    return solver, vars_
+    return solver, model, vars_
 
 # ----------------------------
 # MULTIPLE RUNWAYS
@@ -474,5 +474,5 @@ def solve_multiple_runways_cp(num_planes, num_runways, planes_data, separation_t
         print("-> No feasible/optimal solution found. Status:", solver.StatusName(status))
 
     # Return solver
-    return solver
+    return solver, model
 

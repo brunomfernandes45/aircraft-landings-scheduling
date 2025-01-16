@@ -72,7 +72,7 @@ def performance_MIP(solver):
         "exec_time": exec_time,
         "num_variables": num_variables,
         "num_constraints": num_constraints,
-        "total_penalty": total_penalty,
+        "best_objective": total_penalty,
     }
     
     return metrics
