@@ -17,6 +17,7 @@ The repository is structured to include the implementation of solvers, utility f
 ├── README.md
 ├── presentation.pdf
 ├── report.pdf
+├── requirements.txt
 └── src
     ├── ALS
     │   ├── __init__.py
@@ -27,7 +28,7 @@ The repository is structured to include the implementation of solvers, utility f
     │   ├── utils.py
     │   └── visualization.py
     ├── data
-    ├── report.ipynb
+    ├── notebook.ipynb
 ```
 
 To run the project, Python 3.8 or higher is required, along with the dependencies listed in `requirements.txt`. After installing the dependencies, the solvers can be executed to test either single or multiple runway scenarios using different adjustable parameters. Results can be analyzed or visualized using the pre-built Jupyter notebooks provided.
