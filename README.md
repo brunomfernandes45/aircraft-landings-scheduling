@@ -12,7 +12,23 @@ This project uses both Constraint Programming (CP) and Mixed-Integer Programming
 
 The repository is structured to include the implementation of solvers, utility functions for data preprocessing, performance evaluation scripts, and visualization tools to interpret the results. Input datasets, located in the `data` folder, define the aircraft and runway configurations for each test case.
 
-[Insert Here Structure Tree]
+```shell
+.
+├── README.md
+├── presentation.pdf
+├── report.pdf
+└── src
+    ├── ALS
+    │   ├── __init__.py
+    │   ├── CP.py
+    │   ├── MIP.py
+    │   ├── performanceCP.py
+    │   ├── performanceMIP.py
+    │   ├── utils.py
+    │   └── visualization.py
+    ├── data
+    ├── report.ipynb
+```
 
 To run the project, Python 3.8 or higher is required, along with the dependencies listed in `requirements.txt`. After installing the dependencies, the solvers can be executed to test either single or multiple runway scenarios using different adjustable parameters. Results can be analyzed or visualized using the pre-built Jupyter notebooks provided.
 
