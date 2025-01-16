@@ -15,8 +15,8 @@ The repository is structured to include the implementation of solvers, utility f
 ```shell
 .
 ├── README.md
-├── presentation.pdf
-├── report.pdf
+├── Presentation.pdf
+├── Report.pdf
 ├── requirements.txt
 └── src
     ├── ALS
